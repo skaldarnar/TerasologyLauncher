@@ -1,6 +1,10 @@
 name: Push Validation
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
 
 jobs:
   validate:
@@ -21,6 +25,7 @@ jobs:
         key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
         restore-keys: ${{ runner.os }}-gradle
     - name: Build
+      #TODO: run 'gradlew assemble' here and chache JREs
       run: ./gradlew jar
     - name: Test
       env:
@@ -32,6 +37,11 @@ jobs:
       with:
         name: test-report
         path: build/reports/tests/test/
+    - uses: check-run-reporter/action@v2.0.0
+      # always run, otherwise you'll only see results for passing builds
+      if: always()
+      with:
+        token: ${{ secrets.CHECK_RUN_REPORTER_TOKEN }}
+        report: 'build/test-results/**/*.xml'
     - name: Static Code Analysis
       run: ./gradlew check -x test
-
