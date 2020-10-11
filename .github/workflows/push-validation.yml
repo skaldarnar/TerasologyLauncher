@@ -35,9 +35,11 @@ jobs:
       #TODO: use https://www.check-run-reporter.com/ or similar instead
       if: failure()
       with:
+        label: test
         name: test-report
         path: build/reports/tests/test/
-    - uses: check-run-reporter/action@v2.0.0
+    - name: Upload Test Report
+      uses: check-run-reporter/action@v2.0.0
       # always run, otherwise you'll only see results for passing builds
       if: always()
       with:
@@ -45,3 +47,11 @@ jobs:
         report: 'build/test-results/**/*.xml'
     - name: Static Code Analysis
       run: ./gradlew check -x test
+    - name: Upload Checkstyle Report
+      uses: check-run-reporter/action@v2.0.0
+      # always run, otherwise you'll only see results for passing builds
+      if: always()
+      with:
+        label: code-analysis
+        token: ${{ secrets.CHECK_RUN_REPORTER_TOKEN }}
+        report: 'build/reports/**/*.xml'
