@@ -31,12 +31,22 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
           restore-keys: ${{ runner.os }}-gradle
 
+      - name: Determine Version
+        run: |
+          echo "TERASOLOGY_LAUNCHER_VERSION=$(./version.sh)"
+          echo "TERASOLOGY_LAUNCHER_VERSION=$(./version.sh)" >> $GITHUB_ENV
       - name: Determine Release
         if: contains(env.GITHUB_EVENT_NAME, 'ReleaseEvent')
         run: echo "USE_LAST_TAG=-Prelease.useLastTag=true" >> $GITHUB_ENV
 
       - name: Bundle distribution for ${{ matrix.platform }}
         run: ./gradlew $USE_LAST_TAG ${{ matrix.platform }}DistZip
+
+      # Upload artifacts to CI run and release
+      - uses: actions/upload-artifact@v2
+        with:
+          name: TerasologyLauncher-${{ matrix.platform }}-${{ env.TERASOLOGY_LAUNCHER_VERSION }}.zip
+          path: /build/distributions/TerasologyLauncher-${{ matrix.platform }}-${{ env.TERASOLOGY_LAUNCHER_VERSION }}.zip
       - name: Upload bundle for ${{ matrix.platform }}
         uses: actions/upload-release-asset@v1
         if: contains(env.GITHUB_EVENT_NAME, 'ReleaseEvent')
@@ -46,6 +56,6 @@ jobs:
           # This pulls from the RELEASE event this workflow was triggered by.
           # See https://developer.github.com/v3/activity/events/types/#releaseevent
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./build/distributions/TerasologyLauncher-${{ matrix.platform }}-${{ github.event.release.name }}.zip
+          asset_path: ./build/distributions/TerasologyLauncher-${{ matrix.platform }}-${{ env.TERASOLOGY_LAUNCHER_VERSION }}.zip
           asset_name: TerasologyLauncher-${{ matrix.platform }}.zip
           asset_content_type: application/zip
